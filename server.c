@@ -1,21 +1,17 @@
 
 
 #include <stdio.h>
-
 #include <stdlib.h>
 #include <stdint.h>
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <strings.h>
 #include <string.h>
 #include <sys/stat.h>
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <ctype.h>
-
 #include <pthread.h>
 #include <sys/wait.h>
 
