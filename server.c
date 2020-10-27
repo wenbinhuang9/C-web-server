@@ -22,6 +22,22 @@
 #define STDOUT  1
 #define STDERR  2
 
+
+typedef struct Header {
+    char *name;
+    char *value;
+    struct Header *next;
+} Header;
+
+typedef struct Request {
+    char method[128];
+    char url[128];
+    char version[128];
+    struct Header *headers;
+    char *body;
+} Request;
+
+
 void acceptRequestAndResponse(int );
 void acceptRequest(void * );
 void cat(int, FILE *);
@@ -32,12 +48,24 @@ void headers(int, const char *);
 void sendStaticFiles(int, const char *);
 void responseError(int, char*, char* ,   char*);
 
+
+
+
+
 // accept request and forward request to get response 
-void parseMethodAndURL(int client, char* buf, char* method, char* url, int methodSize, int urlSize) {
+Request* parseRequest(int client, char* buf) {
     size_t numchars = getLine(client, buf, 1024);
-    printf("buf is %s\n", buf);
+    
+    char method[255];
+    size_t methodSize = 255;
+    char url[255];
+    size_t urlSize = 255;
+    char path[512];
     size_t i = 0;
     size_t j = 0;
+    struct Request *req = NULL;
+    req = malloc(sizeof(struct Request));
+
     while (!ISspace(buf[i]) && (i < methodSize - 1))
     {
         method[i] = buf[i];
@@ -45,7 +73,7 @@ void parseMethodAndURL(int client, char* buf, char* method, char* url, int metho
     }
     j=i;
     method[i] = '\0';
-
+    printf("method is %s\n", method);
     i = 0;
     while (ISspace(buf[j]) && (j < numchars))
         j++;
@@ -55,26 +83,28 @@ void parseMethodAndURL(int client, char* buf, char* method, char* url, int metho
         i++; j++;
     }
     url[i] = '\0';
-}
-
-
-void acceptRequest(void *arg)
-{
-    int client = (intptr_t)arg;
-    char buf[1024];
-    char method[255];
-    char url[255];
-    char path[512];
-
-    parseMethodAndURL(client, buf, method, url, 255, 255);
 
     sprintf(path, ".%s", url);
     if (path[strlen(path) - 1] == '/')
         strcat(path, "index.html");
 
-    printf("method:%s, path %s\n",method,  path);
+    strcpy(req->method, method);
+    strcpy(req->url, path);
+    
+    return req; 
+}
 
-    if (strcasecmp(method, "POST") == 0 || strcasecmp(method, "DELETE") == 0 ) {
+void acceptRequest(void *arg)
+{
+    int client = (intptr_t)arg;
+    char buf[1024];
+
+
+    Request* request = parseRequest(client, buf);
+
+    printf("method:%s, url %s\n",request->method,  request->url);
+
+    if (strcasecmp(request->method, "POST") == 0 || strcasecmp(request->method, "DELETE") == 0 ) {
         // method not supported
         char errorCode[] = "501";
         char errorMsg[] = "Method not implemented";
@@ -84,8 +114,9 @@ void acceptRequest(void *arg)
         return;       
     }
 
-    sendStaticFiles(client, path);
+    sendStaticFiles(client, request->url);
 
+    free(request);
     close(client);
 }
 
