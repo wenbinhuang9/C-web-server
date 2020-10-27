@@ -17,12 +17,6 @@
 
 #define ISspace(x) isspace((int)(x))
 
-#define SERVER_STRING "Server: ben server/0.0.1\r\n"
-#define STDIN   0
-#define STDOUT  1
-#define STDERR  2
-
-
 typedef struct Header {
     char *name;
     char *value;
@@ -36,7 +30,6 @@ typedef struct Request {
     struct Header *headers;
     char *body;
 } Request;
-
 
 void acceptRequestAndResponse(int );
 void acceptRequest(void * );
@@ -147,13 +140,11 @@ int getLine(int sock, char *buf, int size)
     while ((i < size - 1) && (c != '\n'))
     {
         n = recv(sock, &c, 1, 0);
-        /* DEBUG printf("%02X\n", c); */
         if (n > 0)
         {
             if (c == '\r')
             {
                 n = recv(sock, &c, 1, MSG_PEEK);
-                /* DEBUG printf("%02X\n", c); */
                 if ((n > 0) && (c == '\n'))
                     recv(sock, &c, 1, 0);
                 else
@@ -273,7 +264,7 @@ int main(void)
     //create server socket and start listening. 
     serverSock = startServer(port);
 
-    printf("web server running on port %d\n", port);
+    printf("open http://localhost:%d/\n", port);
 
     // accept request and deal with each request. 
     serve(serverSock);
