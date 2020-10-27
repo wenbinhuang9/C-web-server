@@ -26,15 +26,15 @@ void acceptRequestAndResponse(int );
 void acceptRequest(void * );
 void cat(int, FILE *);
 
-void error_die(const char *);
-int get_line(int, char *, int);
+void error(const char *);
+int getLine(int, char *, int);
 void headers(int, const char *);
 void sendStaticFiles(int, const char *);
 void responseError(int, char*, char* ,   char*);
 
 // accept request and forward request to get response 
 void parseMethodAndURL(int client, char* buf, char* method, char* url, int methodSize, int urlSize) {
-    size_t numchars = get_line(client, buf, 1024);
+    size_t numchars = getLine(client, buf, 1024);
     printf("buf is %s\n", buf);
     size_t i = 0;
     size_t j = 0;
@@ -56,15 +56,15 @@ void parseMethodAndURL(int client, char* buf, char* method, char* url, int metho
     }
     url[i] = '\0';
 }
+
+
 void acceptRequest(void *arg)
 {
     int client = (intptr_t)arg;
     char buf[1024];
-    size_t numchars;
     char method[255];
     char url[255];
     char path[512];
-    size_t i, j;
 
     parseMethodAndURL(client, buf, method, url, 255, 255);
 
@@ -103,14 +103,14 @@ void cat(int client, FILE *resource)
 }
 
 
-void error_die(const char *sc)
+void error(const char *sc)
 {
     perror(sc);
     exit(1);
 }
 
 
-int get_line(int sock, char *buf, int size)
+int getLine(int sock, char *buf, int size)
 {
     int i = 0;
     char c = '\0';
@@ -172,7 +172,7 @@ void sendStaticFiles(int client, const char *filename)
 
     buf[0] = 'A'; buf[1] = '\0';
     while ((numchars > 0) && strcmp("\n", buf))  /* read & discard headers */
-        numchars = get_line(client, buf, sizeof(buf));
+        numchars = getLine(client, buf, sizeof(buf));
 
     resource = fopen(filename, "r");
     if (resource == NULL) 
@@ -194,7 +194,7 @@ int startServer(u_short servPort) {
     servSocket = socket(PF_INET, SOCK_STREAM, 0);
 
     if (servSocket < 0) {
-        error_die("open socket fails");
+        error("open socket fails");
     }
 
     struct sockaddr_in servAddr;
@@ -205,14 +205,14 @@ int startServer(u_short servPort) {
     servAddr.sin_port = htons(servPort);
     if ((setsockopt(servSocket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0)  
     {  
-        error_die("setsockopt failed");
+        error("setsockopt failed");
     } 
     if (bind(servSocket, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0) {
-        error_die("bind socket fails");
+        error("bind socket fails");
     }
 
     if (listen(servSocket, 30) < 0) {
-        error_die("listen socket fails");
+        error("listen socket fails");
     }
 
     return servSocket;
@@ -226,12 +226,12 @@ void acceptRequestAndResponse(int servSocket) {
         int clientSocket = accept(servSocket, (struct sockaddr *) &clientAddr, &clientAddrLen);
 
         if (clientSocket == -1) {
-            error_die("accept fails");
+            error("accept fails");
         } 
         pthread_t thread;
         int createReuslt = pthread_create(&thread, NULL, (void *)acceptRequest, (void *)(intptr_t)clientSocket);
         if (createReuslt != 0) {
-            error_die("pthread creation fails");
+            error("pthread creation fails");
         }
     }
 
