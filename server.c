@@ -49,9 +49,6 @@ void sendStaticFiles(int, const char *);
 void responseError(int, char*, char* ,   char*);
 
 
-
-
-
 // accept request and forward request to get response 
 Request* parseRequest(int client, char* buf) {
     size_t numchars = getLine(client, buf, 1024);
@@ -250,7 +247,7 @@ int startServer(u_short servPort) {
 }
 
 
-void acceptRequestAndResponse(int servSocket) {
+void serve(int servSocket) {
     while(1) {
         struct sockaddr_in clientAddr; // Client address
         socklen_t clientAddrLen = sizeof(clientAddr);
@@ -279,7 +276,7 @@ int main(void)
     printf("web server running on port %d\n", port);
 
     // accept request and deal with each request. 
-    acceptRequestAndResponse(serverSock);
+    serve(serverSock);
 
     return 0;
 }
