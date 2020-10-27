@@ -1,5 +1,5 @@
 
 
 LIBS = -lpthread #-lsocket
-server: newserver.c
+server: server.c
 	gcc -g -W -Wall $(LIBS) -o $@ $<
