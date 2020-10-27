@@ -84,7 +84,7 @@ Request* parseRequest(int client, char* buf) {
     }
     url[i] = '\0';
 
-    sprintf(path, ".%s", url);
+    sprintf(path, "./blob/%s", url);
     if (path[strlen(path) - 1] == '/')
         strcat(path, "index.html");
 
