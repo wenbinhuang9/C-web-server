@@ -31,16 +31,16 @@ typedef struct Request {
     char *body;
 } Request;
 
-void acceptRequestAndResponse(int );
-void acceptRequest(void * );
+void requestHandlerAndResponse(int );
+void requestHandler(void * );
 void cat(int, FILE *);
 
 void error(const char *);
 int getLine(int, char *, int);
-void headers(int, const char *);
-void sendStaticFiles(int, const char *);
+void headers(int, const char *, char * );
+void sendStaticFiles(int, const char *, const char* );
 void responseError(int, char*, char* ,   char*);
-
+char* getContentType(char* );
 
 // accept request and forward request to get response 
 Request* parseRequest(int client, char* buf) {
@@ -84,7 +84,7 @@ Request* parseRequest(int client, char* buf) {
     return req; 
 }
 
-void acceptRequest(void *arg)
+void requestHandler(void *arg)
 {
     int client = (intptr_t)arg;
     char buf[1024];
@@ -104,7 +104,7 @@ void acceptRequest(void *arg)
         return;       
     }
 
-    sendStaticFiles(client, request->url);
+    sendStaticFiles(client, request->url, request->url);
 
     free(request);
     close(client);
@@ -129,7 +129,6 @@ void error(const char *sc)
     perror(sc);
     exit(1);
 }
-
 
 int getLine(int sock, char *buf, int size)
 {
@@ -161,10 +160,13 @@ int getLine(int sock, char *buf, int size)
     return(i);
 }
 
-void headers(int client, const char *filename)
+void headers(int client, const char *filename, char* contentType)
 {
-    char* response = "HTTP/1.0 200 OK\r\nServer: ben server/0.0.1\r\nContent-Type: text/html\r\n\r\n";
+    char* responseTemplate = "HTTP/1.1 200 OK\r\nServer: ben server/0.0.1\r\nContent-Type: %s\r\n\r\n";
 
+    char response[1024]; 
+    sprintf(response, responseTemplate, contentType);
+    printf("%s\n", response);
     send(client, response, strlen(response), 0);
 }
 
@@ -183,7 +185,7 @@ void responseError(int client, char *errorCode, char *errorMsg,   char *msg)
     send(client, response, strlen(response), 0);
 }
 //get static files 
-void sendStaticFiles(int client, const char *filename)
+void sendStaticFiles(int client, const char *filename, const char* path)
 {
     FILE *resource = NULL;
     int numchars = 1;
@@ -197,11 +199,21 @@ void sendStaticFiles(int client, const char *filename)
     if (resource == NULL) 
         responseError(client, "404", "Not Found", "404 Not Found"); 
     else
-    {
-        headers(client, filename);
+    {   
+        char* type = getContentType(path);
+        headers(client, filename, type);
         cat(client, resource);
     }
     fclose(resource);
+}
+
+char* getContentType(char* path) {
+
+    if (strstr(path, "png")) {
+        return "image/*"; 
+    }
+
+    return "text/html";
 }
 
 
@@ -248,7 +260,7 @@ void serve(int servSocket) {
             error("accept fails");
         } 
         pthread_t thread;
-        int createReuslt = pthread_create(&thread, NULL, (void *)acceptRequest, (void *)(intptr_t)clientSocket);
+        int createReuslt = pthread_create(&thread, NULL, (void *)requestHandler, (void *)(intptr_t)clientSocket);
         if (createReuslt != 0) {
             error("pthread creation fails");
         }
